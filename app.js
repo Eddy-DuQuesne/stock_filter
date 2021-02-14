@@ -1,5 +1,3 @@
-// import { stockSymbolArray } from "./stockSymbolsTest.js";
-import { stockSymbolArray } from "./stockSymbols.js";
 import fs from 'fs';
 import axios from 'axios';
 import { apiToken } from './apiKeys.js';
@@ -9,7 +7,10 @@ const baseUrl = "https://cloud.iexapis.com/stable/";
 const newLine = '\r\n';
 let counter = 0;
 let invalidSymbols = [];
-const getStockSymbols = async () => {
+const startIndex = 16;
+const endIndex = 1000;
+
+const stockSymbolsPromise = async () => {
     return new Promise((resolve, reject) => {
         axios.get(`${baseUrl}/ref-data/region/us/symbols?token=${apiToken}`)
             .then(stockSymbols => {
@@ -20,24 +21,24 @@ const getStockSymbols = async () => {
     });
 }
 
-const getStockData = async () => {
-    const startIndex = 16;
-    const endIndex = 2000;
-    let stockSymbols = await getStockSymbols();
+const getStockSymbols = async () => {
+    let stockSymbols = await stockSymbolsPromise();
     stockSymbols = Object.values(stockSymbols);
 
     let stockSymbolsArray = [];
     stockSymbols.forEach(array => {
         stockSymbolsArray = stockSymbolsArray.concat(array);
     });
-
-
     stockSymbolsArray = stockSymbolsArray.slice(startIndex,endIndex);
-    stockSymbolsArray.forEach(async ({ symbol }) => {
-        console.log(symbol);
-        const stockData = await getStock(symbol);
+    console.log("TOTAL COUNT: ", stockSymbolsArray.length);
+    getStocksFromSymbols(stockSymbolsArray);
+};
+
+const getStocksFromSymbols = async (symbolsArray) => {
+    for (let i = 0; symbolsArray.length > i; i++) {
+        const stockSymbol = symbolsArray[i].symbol;
+        const stockData = await getStock(stockSymbol);
         counter += 1;
-        console.log(counter);
         if (stockData != null) {
             const stock = {
                 symbol: stockData.data.symbol,
@@ -48,8 +49,8 @@ const getStockData = async () => {
             }
             writeStockToCsvFile(stock);
         }
-    });
-};
+    }
+}
 
 const getStock = async (symbol) => {
     return axios.get(
@@ -60,9 +61,10 @@ const getStock = async (symbol) => {
     });
 }
 
-const writeStockToCsvFile = (stock) => {
-    counter += 1;
-    process.stdout.write(`${counter}`);
+const writeStockToCsvFile = (stock) => {    
+    if (counter % 100 === 0) {
+        console.log("COUNT: ", counter);
+    }
     
     let stockString = "";
     const stockKeys = Object.keys(stock);
@@ -88,7 +90,7 @@ const writeStockToCsvFile = (stock) => {
 }
 
 const loadStockData = () => {
-    getStockData();
+    getStockSymbols();
 }
 
 // const filterStocks = async () => {
