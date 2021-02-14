@@ -29,8 +29,7 @@ const getStockSymbols = async () => {
     stockSymbols.forEach(array => {
         stockSymbolsArray = stockSymbolsArray.concat(array);
     });
-    stockSymbolsArray = stockSymbolsArray.slice(startIndex,endIndex);
-    console.log("TOTAL COUNT: ", stockSymbolsArray.length);
+    stockSymbolsArray = stockSymbolsArray.slice(startIndex);
     getStocksFromSymbols(stockSymbolsArray);
 };
 
@@ -48,6 +47,8 @@ const getStocksFromSymbols = async (symbolsArray) => {
                 week52Low: stockData.data.week52Low,
             }
             writeStockToCsvFile(stock);
+            const percentageDone = Math.floor(((i + 1) / symbolsArray.length) * 100);
+            process.stdout.write(`\r Percantage Done: ${percentageDone}%`)
         }
     }
 }
@@ -62,10 +63,6 @@ const getStock = async (symbol) => {
 }
 
 const writeStockToCsvFile = (stock) => {    
-    if (counter % 100 === 0) {
-        console.log("COUNT: ", counter);
-    }
-    
     let stockString = "";
     const stockKeys = Object.keys(stock);
     stockKeys.forEach(key => {
