@@ -58,6 +58,9 @@ const getStocksFromSymbols = async (symbolsArray) => {
             writeStockToCsvFile(stock);
             const percentageDone = Math.floor(((i + 1) / symbolsArray.length) * 100);
             process.stdout.write(`\r Percantage Done: ${percentageDone}%`)
+            if (percentageDone === 100) {
+                console.log('\u0007');
+            }
         }
     }
 }
