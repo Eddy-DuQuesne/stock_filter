@@ -9,7 +9,9 @@ let counter = 0;
 let invalidSymbols = [];
 const startIndex = 16;
 const endIndex = 1000;
-
+// TODO:
+// Get stocks from nas and nys stock exchanges
+// Only of type common stock
 const stockSymbolsPromise = async () => {
     return new Promise((resolve, reject) => {
         axios.get(`${baseUrl}/ref-data/region/us/symbols?token=${apiToken}`)
@@ -29,8 +31,16 @@ const getStockSymbols = async () => {
     stockSymbols.forEach(array => {
         stockSymbolsArray = stockSymbolsArray.concat(array);
     });
+    let filtCounter = 0;
     stockSymbolsArray = stockSymbolsArray.slice(startIndex);
-    getStocksFromSymbols(stockSymbolsArray);
+    const filteredStockSymbols = stockSymbolsArray.filter((stock) => {
+        if (stock.type === "cs" && (stock.exchange === "NYS" || stock.exchange === "NAS")
+        ) {
+            filtCounter += 1;
+            return stock;
+        }    
+    });
+    getStocksFromSymbols(filteredStockSymbols);
 };
 
 const getStocksFromSymbols = async (symbolsArray) => {
