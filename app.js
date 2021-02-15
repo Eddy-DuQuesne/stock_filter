@@ -1,17 +1,16 @@
 import fs from 'fs';
 import axios from 'axios';
+import csv from 'csv-parser';
 import { apiToken } from './apiKeys.js';
 
 const baseUrl = "https://cloud.iexapis.com/stable/";
-
+const [action] = process.argv.slice(2);
 const newLine = '\r\n';
 let counter = 0;
 let invalidSymbols = [];
 const startIndex = 16;
 const endIndex = 1000;
-// TODO:
-// Get stocks from nas and nys stock exchanges
-// Only of type common stock
+
 const stockSymbolsPromise = async () => {
     return new Promise((resolve, reject) => {
         axios.get(`${baseUrl}/ref-data/region/us/symbols?token=${apiToken}`)
@@ -51,7 +50,7 @@ const getStocksFromSymbols = async (symbolsArray) => {
         if (stockData != null) {
             const stock = {
                 symbol: stockData.data.symbol,
-                companyName: stockData.data.companyName,
+                companyName: stockData.data.companyName.replace(",", ""),
                 latestPrice: stockData.data.latestPrice,
                 week52High: stockData.data.week52High,
                 week52Low: stockData.data.week52Low,
@@ -100,25 +99,46 @@ const loadStockData = () => {
     getStockSymbols();
 }
 
-// const filterStocks = async () => {
-//     stocks.forEach(stock => {
-//         const highLowDiff = stock.week52High - stock.week52Low;
-//         const lowMargin = highLowDiff * .10;
-//         const topLimit = stock.week52Low + lowMargin;
+const filterStocks = async () => {  
+    const stockData = await parseCSVFile('./data.csv');
+    console.log(stockData);
+    // stocks.forEach(stock => {
+    //     const highLowDiff = stock.week52High - stock.week52Low;
+    //     const lowMargin = highLowDiff * .10;
+    //     const topLimit = stock.week52Low + lowMargin;
 
-//         if (stock.latestPrice < topLimit) {
-//             let validStock = "";
-//             const stockKeys = Object.keys(stock);
-//             stockKeys.forEach(key => {
-//                 validStock += `${stock[key]},`
-//             });
-//             validStocks.push(validStock);
-//         }
-//     });
-//     fs.writeFile("./data.csv", validStocks.join("\r\n"), (err) => {
-//         // console.log(err || "done");
-//     });
-// }
+    //     if (stock.latestPrice < topLimit) {
+    //         let validStock = "";
+    //         const stockKeys = Object.keys(stock);
+    //         stockKeys.forEach(key => {
+    //             validStock += `${stock[key]},`
+    //         });
+    //         validStocks.push(validStock);
+    //     }
+    // });
+    // fs.writeFile("./data.csv", validStocks.join("\r\n"), (err) => {
+    //     // console.log(err || "done");
+    // });
+}
 
-loadStockData();
+const parseCSVFile = (file) => {
+    return new Promise((resolve, reject) => {
+        const stockArray = [];
+        fs.createReadStream(file)
+        .pipe(csv())
+        .on('data', (row) => {
+          stockArray.push(row);
+        })
+        .on('end', () => {
+          console.log('CSV file successfully processed');
+          resolve(stockArray);
+        });
+    })
+}
+
+if (action === "filter") {
+    filterStocks();   
+} else if (action === "load-stocks") {
+    loadStockData();
+}
 // const data = getStockSymbols();
