@@ -2,3 +2,4 @@ node_modules/
 data.csv
 apiKeys.js
 *.csv
+.vscode
